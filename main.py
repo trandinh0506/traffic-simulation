@@ -3,7 +3,6 @@ import sys
 from map import Map
 from car import Car
 from constant import *
-
 pygame.init()
 
 class Simulation(object):
@@ -12,7 +11,7 @@ class Simulation(object):
         pygame.display.set_caption("TRAFFIC SIMULATION")
         self.running: bool = True
         self.map: Map = Map()
-        self.cars: list[Car] = [Car([50, 700], (0.03, 0), "up")]
+        self.cars: list[Car] = [Car([50, 1500], UP)]
         self.scoll: list[int] = [0, 0]  
         self.leftMouseDown: bool = False
         self.leftMouseDownPos: tuple[int, int] = (0, 0)  
@@ -36,10 +35,12 @@ class Simulation(object):
             self.map.render(self.screen, scrollRender)
             for car in self.cars:
                 car.update(delta_t)
-                if abs(car.speed[0]) < 150 and abs(car.speed[1]) < 150:
+                if abs(car.speed[0]) < 80 and abs(car.speed[1]) < 80:
                     car.addForce(1000)
                 else:
                     car.tracionForce = car.frictionForce
+                if car.pos[1] < 530:
+                    car.turn(RIGHT)
                 car.render(self.screen, scrollRender)
 
             for event in pygame.event.get():
