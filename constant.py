@@ -17,10 +17,13 @@ UP = "up"
 DOWN = "down"
 
 DIRECTIONS: tuple[str] = (LEFT, RIGHT, DOWN, UP)
+
 RUNNING = "running"
 TURNING = "tuning"
+GO_STRAIGHT = "go straight"
 
 SCREEN_WIDTH = 1200
 SCREEN_HEIGHT = 700
 
 MAX_STEERING_ANGLE = math.radians(30)
+ 
