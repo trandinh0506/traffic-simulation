@@ -1,6 +1,6 @@
 import pygame
 import sys
-from map import Map
+from traffic_network import TrafficNetwork
 from car import Car
 from constant import *
 pygame.init()
@@ -10,8 +10,8 @@ class Simulation(object):
         self.screen: pygame.Surface = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT)) # main screen used for blit display
         pygame.display.set_caption("TRAFFIC SIMULATION")
         self.running: bool = True
-        self.map: Map = Map()
-        self.cars: list[Car] = [Car([50, 1500], UP)]
+        self.trafficNetwork: TrafficNetwork = TrafficNetwork()
+        self.cars: list[Car] = [Car([770, 1200], UP), Car([715, 1200], UP)]
         self.scoll: list[int] = [0, 0]  
         self.leftMouseDown: bool = False
         self.leftMouseDownPos: tuple[int, int] = (0, 0)  
@@ -32,15 +32,15 @@ class Simulation(object):
             else:
                 scrollRender = (int(self.scoll[0]), int(self.scoll[1]))
 
-            self.map.render(self.screen, scrollRender)
+            self.trafficNetwork.render(self.screen, scrollRender)
             for car in self.cars:
                 car.update(delta_t)
-                if abs(car.speed[0]) < 80 and abs(car.speed[1]) < 80:
+                if abs(car.speed[0]) < 50 and abs(car.speed[1]) < 50:
                     car.addForce(1000)
                 else:
                     car.tracionForce = car.frictionForce
-                if car.pos[1] < 530:
-                    car.turn(RIGHT)
+                if car.pos[1] < 600:
+                    car.turn(DOWN)
                 car.render(self.screen, scrollRender)
 
             for event in pygame.event.get():

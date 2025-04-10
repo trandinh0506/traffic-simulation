@@ -7,10 +7,10 @@ class Car:
         self.speed = [0, 0]
         self.direction: str = direction
         self.mass: int = 1500
-        self.wheelbase = 2.5
+        self.wheelbase = 4.5
         self.steeringAngle: float = 0
         self.frictionForce: float = MEE * self.mass * GRAVITY
-        self.tracionForce: float = 35000
+        self.tracionForce: float = 1
         self.acceleration: list[float] = [0, 0]
         self.currentAngle: float = DIRECTION2ANGLE[self.direction]
         self.action: str = GO_STRAIGHT
@@ -22,14 +22,14 @@ class Car:
         self.image = pygame.image.load("images/car.png").convert_alpha()
         self.image.set_colorkey((255, 255, 255))
     def update(self, delta_t: float):
-        if self.action == TURNING and self.frame % 10 == 0:
+        if self.action == TURNING and self.frame % 5 == 0:
             self.updateTurning(delta_t)
 
         self.updateAcceleration()
         self.updateVelocity(delta_t)
         self.updatePos(delta_t)
         
-        self.frame += 1
+        self.frame = (self.frame + 1) % 100
 
     def updateTurning(self, delta_t: float):
 
@@ -94,9 +94,9 @@ class Car:
             return False
         
         if self.direction > newDirection:
-            self.steeringAngle = -math.radians(4)
+            self.steeringAngle = -math.radians(13)
         else:
-            self.steeringAngle = math.radians(4)
+            self.steeringAngle = math.radians(13)
         
         self.action = TURNING
         self.turnTo = newDirection
