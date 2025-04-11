@@ -1,25 +1,60 @@
+from __future__ import annotations
 import pygame
+from typing import List, Tuple, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from road_segment import RoadSegment
 
 class Intersection:
-    def __init__(self, x: int, y: int, gap: int):
+    def __init__(self, x: int, y: int, size: int = 40, circular: bool = False) -> None:
         """
         :param x, y: Tọa độ trung tâm của intersection.
-        :param gap: Khoảng trống xung quanh trung tâm để vẽ vùng giao cắt.
+        :param size: Kích thước vùng giao cắt (vuông hoặc đường kính nếu circular).
+        :param circular: Nếu True thì vẽ giao lộ hình tròn (vòng xuyến).
         """
-        self.x = x
-        self.y = y
-        self.gap = gap  # Gap thực sự tại trung tâm intersection.
-        self.connected_roads = []  # Danh sách RoadSegment nối đến intersection.
+        self.x: int = x
+        self.y: int = y
+        self.size: int = size
+        self.circular: bool = circular
 
-    def add_road(self, road):
+        self.connected_roads: List[RoadSegment] = []
+        self.entry_roads: List[RoadSegment] = []
+        self.exit_roads: List[RoadSegment] = []
+
+    def add_road(self, road: RoadSegment) -> None:
+        """
+        Thêm road vào intersection. Tự động phân loại entry/exit.
+        """
         self.connected_roads.append(road)
+        if road.end == self:
+            self.entry_roads.append(road)
+        if road.start == self:
+            self.exit_roads.append(road)
 
-    def render(self, display: pygame.Surface, offset: tuple[int, int]):
-        # Vẽ vùng giao cắt với màu xám (hoặc màu khác tuỳ ý)
-        rect = pygame.Rect(
-            self.x - self.gap//2 - offset[0],
-            self.y - self.gap//2 - offset[1],
-            self.gap,
-            self.gap
-        )
-        pygame.draw.rect(display, (128, 128, 128), rect)
+    def render(self, display: pygame.Surface, offset: Tuple[int, int]) -> None:
+        """
+        Vẽ intersection – hình vuông hoặc hình tròn tùy theo chế độ.
+        """
+        screen_x = self.x - offset[0]
+        screen_y = self.y - offset[1]
+
+        if self.circular:
+            radius = self.size // 2
+            pygame.draw.circle(display, (160, 160, 160), (screen_x, screen_y), radius)
+        else:
+            rect = pygame.Rect(
+                screen_x - self.size // 2,
+                screen_y - self.size // 2,
+                self.size,
+                self.size
+            )
+            pygame.draw.rect(display, (128, 128, 128), rect)
+
+    def get_position(self) -> Tuple[int, int]:
+        return self.x, self.y
+
+    def get_entry_roads(self) -> List[RoadSegment]:
+        return self.entry_roads
+
+    def get_exit_roads(self) -> List[RoadSegment]:
+        return self.exit_roads

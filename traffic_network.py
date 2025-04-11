@@ -1,99 +1,56 @@
-
 import pygame
 from intersection import Intersection
 from road_segment import RoadSegment
 from constant import *
+
 class TrafficNetwork:
-    def __init__(self):
-        self.intersections = []
-        self.roads = []
+    def __init__(self) -> None:
+        self.intersections: dict[str, Intersection] = {}
+        self.roads: list[RoadSegment] = []
 
-        # Tạo 2 intersection
-        inter0 = Intersection(400, 400, 240)
-        inter1 = Intersection(400 + 1200, 400, 240)
-        self.intersections.extend([inter0, inter1])
+        self._create_intersections()
+        self._create_roads()
 
-        # inter0 → inter1 (RIGHT)
-        self.roads.append(RoadSegment(
-            start_intersection=inter0,
-            end_intersection=inter1,
-            direction=RIGHT,
-            road_length=1200,
-            half_lane_total=120,
-            lane_widths_dir1=[60, 60],
-            lane_widths_dir2=[60, 60]
-        ))
+    def _create_intersections(self) -> None:
+        # Tạo ngã tư inter0 và inter1
+        self.intersections["inter0"] = Intersection(400, 400, 240)
+        self.intersections["inter1"] = Intersection(400 + 1200, 400, 240)
 
-        # inter1 → phải tiếp (RIGHT)
-        self.roads.append(RoadSegment(
-            start_intersection=inter1,
-            end_intersection=None,
-            direction=RIGHT,
-            road_length=600,
-            half_lane_total=120,
-            lane_widths_dir1=[60, 60],
-            lane_widths_dir2=[60, 60]
-        ))
+    def _create_roads(self) -> None:
+        inter0 = self.intersections["inter0"]
+        inter1 = self.intersections["inter1"]
 
-        # Đường trái từ inter0 (LEFT)
-        self.roads.append(RoadSegment(
-            start_intersection=inter0,
-            end_intersection=None,
-            direction=LEFT,
-            road_length=600,
-            half_lane_total=120,
-            lane_widths_dir1=[60, 60],
-            lane_widths_dir2=[60, 60]
-        ))
+        def add_road(start, end, direction, length=600):
+            road = RoadSegment(
+                start_intersection=start,
+                end_intersection=end,
+                direction=direction,
+                road_length=length,
+                half_lane_total=120,
+                lane_widths_dir1=[60, 60],
+                lane_widths_dir2=[60, 60]
+            )
+            self.roads.append(road)
 
-        # Đường đi xuống từ inter0
-        self.roads.append(RoadSegment(
-            start_intersection=inter0,
-            end_intersection=None,
-            direction=DOWN,
-            road_length=600,
-            half_lane_total=120,
-            lane_widths_dir1=[60, 60],
-            lane_widths_dir2=[60, 60]
-        ))
+        # inter0 → inter1
+        add_road(inter0, inter1, RIGHT, 1200)
 
-        # Đường đi lên từ inter0
-        self.roads.append(RoadSegment(
-            start_intersection=inter0,
-            end_intersection=None,
-            direction=UP,
-            road_length=600,
-            half_lane_total=120,
-            lane_widths_dir1=[60, 60],
-            lane_widths_dir2=[60, 60]
-        ))
+        # inter1 → tiếp phải
+        add_road(inter1, None, RIGHT)
 
-        # Đường đi xuống từ inter1
-        self.roads.append(RoadSegment(
-            start_intersection=inter1,
-            end_intersection=None,
-            direction=DOWN,
-            road_length=600,
-            half_lane_total=120,
-            lane_widths_dir1=[60, 60],
-            lane_widths_dir2=[60, 60]
-        ))
+        # Các hướng từ inter0
+        add_road(inter0, None, LEFT)
+        add_road(inter0, None, DOWN)
+        add_road(inter0, None, UP)
 
-        # Đường đi lên từ inter1
-        self.roads.append(RoadSegment(
-            start_intersection=inter1,
-            end_intersection=None,
-            direction=UP,
-            road_length=600,
-            half_lane_total=120,
-            lane_widths_dir1=[60, 60],
-            lane_widths_dir2=[60, 60]
-        ))
+        # Các hướng từ inter1
+        add_road(inter1, None, DOWN)
+        add_road(inter1, None, UP)
 
-        # Nếu muốn inter1 ← trái (quay lại inter0) có thể thêm road ngược lại nếu thích
+        # (Có thể thêm inter1 ← inter0 nếu muốn hai chiều)
 
     def render(self, display: pygame.Surface, offset: tuple[int, int]) -> None:
         for road in self.roads:
             road.render(display, offset)
-        for inter in self.intersections:
+        for inter in self.intersections.values():
             inter.render(display, offset)
