@@ -1,15 +1,20 @@
 import pygame
 import random
+from typing import TYPE_CHECKING
+from constant import *
+from utils import reverseDirection
+
+if TYPE_CHECKING:
+    from way import Way
 
 class Lane:
-    def __init__(self, x: int, y: int, width: int, height: int, direction: str):
+    def __init__(self, x: int, y: int, width: int, height: int, direction: str, way: "Way", lane_number: int):
         self.rect = pygame.Rect(x, y, width, height)
+        self.way = way
         self.direction = direction  # "left", "right", "up", "down"
-        # Lưu một giá trị offset cố định cho arrow của lane (chọn random 1 lần)
-        # Bạn có thể tùy chỉnh mức độ lệch này (ví dụ ±3 pixel)
+        self.lane_number = lane_number  # Số hiệu của lane
+        # Lưu một giá trị offset cố định cho arrow của lane (chọn ngẫu nhiên một lần)
         self.arrow_offset = random.randint(-7, 7) * 4
-        # Nếu cần hoạt ảnh arrow chạy dọc lane, bạn có thể lưu thêm base_position.
-        # Ví dụ: self.arrow_base = 0
 
     @property
     def x(self):
@@ -42,23 +47,27 @@ class Lane:
         # Vẽ mũi tên chỉ hướng cho lane
         self.draw_arrows(display, offset)
 
+        # Vẽ số hiệu lane lên trên (cho mục đích debug)
+        font = pygame.font.SysFont("times", 12)
+        text_surface = font.render(f"{self.lane_number}", True, (255, 255, 255))
+        display.blit(text_surface, (self.x - offset[0] + 5, self.y - offset[1] + 5))
+
     def draw_arrows(self, display: pygame.Surface, offset: tuple[int, int],
-                    arrow_total_length: int = 25,   # Giảm chiều dài tổng để tip không quá dài
-                    base_gap: int = 180,             # Khoảng cách cơ sở giữa các mũi tên
-                    arrow_thickness: int = 10,       # Điều chỉnh độ dày cho phù hợp
+                    arrow_total_length: int = 25,
+                    base_gap: int = 180,
+                    arrow_thickness: int = 10,
                     arrow_color: tuple[int, int, int] = (255, 255, 255)
                     ) -> None:
         """
         Vẽ arrow composite (shaft + tip) lặp lại dọc theo lane.
-        Sử dụng self.arrow_offset đã lưu để có một gap cố định (có thêm độ lệch nhẹ).
+        Sử dụng self.arrow_offset đã lưu để có một khoảng cách cố định (với một chút lệch ngẫu nhiên).
         """
-        # Cộng thêm arrow_offset vào base_gap để đảm bảo gap không thay đổi giữa các frame.
         effective_gap = base_gap + self.arrow_offset
 
         if self.direction in ("right", "left"):
             center_y = self.y + self.height // 2 - offset[1]
             if self.direction == "right":
-                start_x = self.x + effective_gap//2 - offset[0]
+                start_x = self.x + effective_gap // 2 - offset[0]
                 end_x = self.x + self.width - arrow_total_length - offset[0]
                 pos = start_x
                 while pos < end_x:
@@ -66,7 +75,7 @@ class Lane:
                                               arrow_total_length, arrow_thickness, arrow_color)
                     pos += effective_gap
             else:  # left
-                start_x = self.x + self.width - effective_gap//2 - offset[0]
+                start_x = self.x + self.width - effective_gap // 2 - offset[0]
                 end_x = self.x + arrow_total_length - offset[0]
                 pos = start_x
                 while pos > end_x:
@@ -76,7 +85,7 @@ class Lane:
         else:
             center_x = self.x + self.width // 2 - offset[0]
             if self.direction == "down":
-                start_y = self.y + effective_gap//2 - offset[1]
+                start_y = self.y + effective_gap // 2 - offset[1]
                 end_y = self.y + self.height - arrow_total_length - offset[1]
                 pos = start_y
                 while pos < end_y:
@@ -84,7 +93,7 @@ class Lane:
                                               arrow_total_length, arrow_thickness, arrow_color)
                     pos += effective_gap
             else:  # up
-                start_y = self.y + self.height - effective_gap//2 - offset[1]
+                start_y = self.y + self.height - effective_gap // 2 - offset[1]
                 end_y = self.y + arrow_total_length - offset[1]
                 pos = start_y
                 while pos > end_y:
@@ -96,49 +105,70 @@ class Lane:
                              direction: str,
                              arrow_total_length: int, arrow_thickness: int,
                              arrow_color: tuple[int, int, int]) -> None:
-        """
-        Vẽ arrow composite:
-          - Shaft: hình chữ nhật chiếm 70% chiều dài arrow_total_length.
-          - Tip: phần tam giác chiếm phần còn lại.
-        """
-        # Điều chỉnh tỉ lệ cho mũi tên: shaft_length = 70% tổng chiều dài.
         shaft_length = int(arrow_total_length * 0.7)
         tip_length = arrow_total_length - shaft_length
         x, y = start_pos
 
         if direction == "right":
-            shaft_rect = pygame.Rect(x, y - arrow_thickness//2, shaft_length, arrow_thickness)
+            shaft_rect = pygame.Rect(x, y - arrow_thickness // 2, shaft_length, arrow_thickness)
             pygame.draw.rect(display, arrow_color, shaft_rect)
             tip_points = [
-                (x + shaft_length, y - arrow_thickness//2),
-                (x + shaft_length, y + arrow_thickness//2),
+                (x + shaft_length, y - arrow_thickness // 2),
+                (x + shaft_length, y + arrow_thickness // 2),
                 (x + arrow_total_length, y)
             ]
             pygame.draw.polygon(display, arrow_color, tip_points)
         elif direction == "left":
-            shaft_rect = pygame.Rect(x - shaft_length, y - arrow_thickness//2, shaft_length, arrow_thickness)
+            shaft_rect = pygame.Rect(x - shaft_length, y - arrow_thickness // 2, shaft_length, arrow_thickness)
             pygame.draw.rect(display, arrow_color, shaft_rect)
             tip_points = [
-                (x - shaft_length, y - arrow_thickness//2),
-                (x - shaft_length, y + arrow_thickness//2),
+                (x - shaft_length, y - arrow_thickness // 2),
+                (x - shaft_length, y + arrow_thickness // 2),
                 (x - arrow_total_length, y)
             ]
             pygame.draw.polygon(display, arrow_color, tip_points)
         elif direction == "down":
-            shaft_rect = pygame.Rect(x - arrow_thickness//2, y, arrow_thickness, shaft_length)
+            shaft_rect = pygame.Rect(x - arrow_thickness // 2, y, arrow_thickness, shaft_length)
             pygame.draw.rect(display, arrow_color, shaft_rect)
             tip_points = [
-                (x - arrow_thickness//2, y + shaft_length),
-                (x + arrow_thickness//2, y + shaft_length),
+                (x - arrow_thickness // 2, y + shaft_length),
+                (x + arrow_thickness // 2, y + shaft_length),
                 (x, y + arrow_total_length)
             ]
             pygame.draw.polygon(display, arrow_color, tip_points)
         elif direction == "up":
-            shaft_rect = pygame.Rect(x - arrow_thickness//2, y - shaft_length, arrow_thickness, shaft_length)
+            shaft_rect = pygame.Rect(x - arrow_thickness // 2, y - shaft_length, arrow_thickness, shaft_length)
             pygame.draw.rect(display, arrow_color, shaft_rect)
             tip_points = [
-                (x - arrow_thickness//2, y - shaft_length),
-                (x + arrow_thickness//2, y - shaft_length),
+                (x - arrow_thickness // 2, y - shaft_length),
+                (x + arrow_thickness // 2, y - shaft_length),
                 (x, y - arrow_total_length)
             ]
             pygame.draw.polygon(display, arrow_color, tip_points)
+
+    def get_center(self) -> list[float]:
+        return [self.rect.centerx, self.rect.centery]
+
+    def get_entry_target_point(self) -> list[float]:
+        """
+        Trả về một điểm mục tiêu hợp lý để xe hướng tới khi rẽ vào lane này.
+        Ví dụ: nếu lane có hướng RIGHT, điểm vào có thể cách mép trái của lane một khoảng nhất định.
+        """
+        if self.direction == RIGHT:
+            return [self.rect.left + 30, self.rect.centery]
+        elif self.direction == LEFT:
+            return [self.rect.right - 30, self.rect.centery]
+        elif self.direction == DOWN:
+            return [self.rect.centerx, self.rect.top + 30]
+        elif self.direction == UP:
+            return [self.rect.centerx, self.rect.bottom - 30]
+        return [self.rect.centerx, self.rect.centery]
+
+    def is_same_direction(self, other_lane: "Lane") -> bool:
+        return self.direction == other_lane.direction
+
+    def is_opposite_direction(self, other_lane: "Lane") -> bool:
+        return reverseDirection(self.direction) == other_lane.direction
+
+    def belongs_to_same_way(self, other_lane: "Lane", way: "Way") -> bool:
+        return self in way.lanes_list and other_lane in way.lanes_list

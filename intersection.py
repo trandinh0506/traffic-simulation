@@ -2,8 +2,12 @@ from __future__ import annotations
 import pygame
 from typing import List, Tuple, TYPE_CHECKING
 
+
+from lane import Lane
+
 if TYPE_CHECKING:
     from road_segment import RoadSegment
+    from car import Car
 
 class Intersection:
     def __init__(self, x: int, y: int, size: int = 40, circular: bool = False) -> None:
@@ -49,7 +53,18 @@ class Intersection:
                 self.size
             )
             pygame.draw.rect(display, (128, 128, 128), rect)
+            
+    def get_center(self) -> tuple[int, int]:
+        return (self.x, self.y)
 
+    def get_rect(self) -> pygame.Rect:
+        OFFSET = 25
+        if self.circular:
+            radius = self.size // 2
+            return pygame.Rect(self.x - radius + OFFSET, self.y - radius + OFFSET, self.size - 2 * OFFSET, self.size - 2 * OFFSET)
+        else:
+            return pygame.Rect(self.x - self.size // 2 + OFFSET, self.y - self.size // 2 + OFFSET, self.size - 2 * OFFSET, self.size - 2 * OFFSET)
+        
     def get_position(self) -> Tuple[int, int]:
         return self.x, self.y
 
@@ -58,3 +73,22 @@ class Intersection:
 
     def get_exit_roads(self) -> List[RoadSegment]:
         return self.exit_roads
+    
+    def get_valid_lanes_for(self, car: Car, currentLaneNumber: int) -> list[Lane]:
+        """
+        Trả về danh sách các lane hợp lệ mà xe có thể rẽ vào từ vị trí hiện tại.
+        Dựa trên các road bắt đầu từ intersection này (exit_roads).
+        """
+        valid_lanes = []
+
+        # Giả định car có thuộc tính current_lane
+        current_lane = getattr(car, "current_lane", None)
+        if not current_lane:
+            return valid_lanes
+
+        for road in self.exit_roads:
+            way = road.way  # giả sử mỗi RoadSegment có thuộc tính `way`
+            if way:
+                valid_lanes.extend(way.get_valid_lanes_for_turn(current_lane, currentLaneNumber))
+
+        return valid_lanes

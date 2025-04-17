@@ -11,7 +11,16 @@ class Simulation(object):
         pygame.display.set_caption("TRAFFIC SIMULATION")
         self.running: bool = True
         self.trafficNetwork: TrafficNetwork = TrafficNetwork()
-        self.cars: list[Car] = [Car([770, 1200], UP), Car([715, 1200], UP)]
+        # Car([490, 1200], UP)
+        # Car([100, 430], RIGHT)
+        # Car([430, 1000], UP)
+        # Car([370, -50], DOWN)
+        # Car([700, 370], LEFT)
+        # , Car([490, 1200], UP), Car([370, -50], DOWN), Car([100, 430], RIGHT)
+        # Car([700, 370], LEFT), Car([490, 1200], UP), Car([370, -50], DOWN),
+        #                         Car([100, 430], RIGHT), Car([430, 1200], UP), Car([320, -50], DOWN)
+        self.cars: list[Car] = [Car([700, 370], LEFT), Car([490, 900], UP), Car([370, -50], DOWN),
+                                Car([100, 430], RIGHT), Car([430, 900], UP), Car([320, -50], DOWN)]
         self.scoll: list[int] = [0, 0]  
         self.leftMouseDown: bool = False
         self.leftMouseDownPos: tuple[int, int] = (0, 0)  
@@ -34,14 +43,9 @@ class Simulation(object):
 
             self.trafficNetwork.render(self.screen, scrollRender)
             for car in self.cars:
-                car.update(delta_t)
-                if abs(car.speed[0]) < 50 and abs(car.speed[1]) < 50:
-                    car.addForce(1000)
-                else:
-                    car.tracionForce = car.frictionForce
-                if car.pos[1] < 600:
-                    car.turn(DOWN)
+                car.update(delta_t, self.trafficNetwork.getIntersections(), self.trafficNetwork.roads, self.cars)
                 car.render(self.screen, scrollRender)
+                car.debug_render(self.screen, scrollRender)
 
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEBUTTONDOWN:
@@ -64,7 +68,8 @@ class Simulation(object):
                     self.running = False
                     pygame.quit()
                     sys.exit(0)
-
+                    
+            # pygame.draw.rect(self.screen, (255, 0, 0), (self.cars[0].get_rect().x - scrollRender[0], self.cars[0].get_rect().y - scrollRender[1], self.cars[0].get_rect().width, self.cars[0].get_rect().height))
             pygame.display.update()
 
 
