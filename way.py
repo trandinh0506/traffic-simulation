@@ -1,6 +1,6 @@
 import pygame
 from lane import Lane
-from utils import drawDashedLine, is_turn_direction_valid, reverseDirection
+from utils import drawDashedLine, reverseDirection
 from constant import LEFT, RIGHT, UP, DOWN
 
 class Way:
@@ -155,8 +155,8 @@ class Way:
         if self.direction in (LEFT, RIGHT):
             y_top = first.y - offset[1]
             y_bot = last.y + last.height - offset[1]
-            x1 = first.x - offset[0]
-            x2 = first.x + first.width - offset[0]
+            x1 = first.x  - offset[0]  # Bắt đầu từ indent
+            x2 = first.x + first.width - offset[0]  # Kết thúc trước indent
 
             pygame.draw.line(display, (255, 255, 255), (x1, y_top), (x2, y_top), 2)
             pygame.draw.line(display, (255, 255, 255), (x1, y_bot), (x2, y_bot), 2)
@@ -172,6 +172,8 @@ class Way:
     def drawLaneDividers(self, display, offset):
         if len(self.lanes_list) < 2:
             return
+        
+        indent = 80  # Khoảng thụt đầu dòng
 
         for i in range(1, len(self.lanes_list)):
             prev_lane = self.lanes_list[i - 1]
@@ -181,62 +183,34 @@ class Way:
                 y_div = (prev_lane.y + prev_lane.height + curr_lane.y) / 2.0
                 y_div -= offset[1]
 
-                x1 = curr_lane.x - offset[0]
-                x2 = curr_lane.x + curr_lane.width - offset[0]
+                x1 = curr_lane.x + indent - offset[0]
+                x2 = curr_lane.x + curr_lane.width - indent - offset[0]
 
                 drawDashedLine(display, (255, 255, 255), (x1, y_div), (x2, y_div), width=2)
             else:
                 x_div = (prev_lane.x + prev_lane.width + curr_lane.x) / 2.0
                 x_div -= offset[0]
 
-                y1 = curr_lane.y - offset[1]
-                y2 = curr_lane.y + curr_lane.height - offset[1]
+                y1 = curr_lane.y + indent - offset[1]
+                y2 = curr_lane.y + curr_lane.height - indent - offset[1]
 
                 drawDashedLine(display, (255, 255, 255), (x_div, y1), (x_div, y2), width=2)
 
     def drawCenterLine(self, display, offset):
         if not self.is_two_way:
             return
+        
+        indent = 80  # Khoảng thụt đầu dòng
 
         if self.direction in (LEFT, RIGHT):
             y_mid = self.boundary_between_two_dir - offset[1]
-            x1 = self.pos[0] - offset[0]
-            x2 = self.pos[0] + self.size[0] - offset[0]
+            x1 = self.pos[0] + indent - offset[0]
+            x2 = self.pos[0] + self.size[0] - indent - offset[0]
             drawDashedLine(display, (255, 255, 0), (x1, y_mid), (x2, y_mid), width=4)
         else:
             x_mid = self.boundary_between_two_dir - offset[0]
-            y1 = self.pos[1] - offset[1]
-            y2 = self.pos[1] + self.size[1] - offset[1]
+            y1 = self.pos[1] + indent - offset[1]
+            y2 = self.pos[1] + self.size[1] - indent - offset[1]
             drawDashedLine(display, (255, 255, 0), (x_mid, y1), (x_mid, y2), width=4)
 
-    def get_valid_lanes_for_turn(self, current_lane: Lane, currentLaneNumber: int) -> list[Lane]:
-        """
-        Trả về danh sách lane hợp lệ để chuyển hướng từ current_lane.
-        """
-        valid_lanes = []
-        if not current_lane:
-            return valid_lanes
-
-        cx, cy = current_lane.get_center()
-        cur_dir = current_lane.direction
-
-        for lane in self.lanes_list:
-            if lane is current_lane:
-                continue
-
-            lx, ly = lane.get_center()
-            target_dir = lane.direction
-
-            # Đi thẳng
-            if target_dir == cur_dir and lane.way != current_lane.way:
-                valid_lanes.append(lane)
-            # Quay đầu
-            elif target_dir == reverseDirection(cur_dir) and lane.way == current_lane.way and currentLaneNumber == 1:
-                valid_lanes.append(lane)
-            # Rẽ trái/phải
-            elif lane.way != current_lane.way and is_turn_direction_valid(cur_dir, (cx, cy), (lx, ly), target_dir, currentLaneNumber):
-                valid_lanes.append(lane)
-        return valid_lanes
-
-    def get_same_direction_lanes(self, direction: str) -> list[Lane]:
-        return [lane for lane in self.lanes_list if lane.direction == direction]
+    

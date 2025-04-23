@@ -74,21 +74,3 @@ class Intersection:
     def get_exit_roads(self) -> List[RoadSegment]:
         return self.exit_roads
     
-    def get_valid_lanes_for(self, car: Car, currentLaneNumber: int) -> list[Lane]:
-        """
-        Trả về danh sách các lane hợp lệ mà xe có thể rẽ vào từ vị trí hiện tại.
-        Dựa trên các road bắt đầu từ intersection này (exit_roads).
-        """
-        valid_lanes = []
-
-        # Giả định car có thuộc tính current_lane
-        current_lane = getattr(car, "current_lane", None)
-        if not current_lane:
-            return valid_lanes
-
-        for road in self.exit_roads:
-            way = road.way  # giả sử mỗi RoadSegment có thuộc tính `way`
-            if way:
-                valid_lanes.extend(way.get_valid_lanes_for_turn(current_lane, currentLaneNumber))
-
-        return valid_lanes

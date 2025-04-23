@@ -53,52 +53,53 @@ class Lane:
         display.blit(text_surface, (self.x - offset[0] + 5, self.y - offset[1] + 5))
 
     def draw_arrows(self, display: pygame.Surface, offset: tuple[int, int],
-                    arrow_total_length: int = 25,
-                    base_gap: int = 180,
-                    arrow_thickness: int = 10,
-                    arrow_color: tuple[int, int, int] = (255, 255, 255)
-                    ) -> None:
+                arrow_total_length: int = 25,
+                base_gap: int = 180,
+                arrow_thickness: int = 10,
+                arrow_color: tuple[int, int, int] = (255, 255, 255)
+                ) -> None:
         """
         Vẽ arrow composite (shaft + tip) lặp lại dọc theo lane.
-        Sử dụng self.arrow_offset đã lưu để có một khoảng cách cố định (với một chút lệch ngẫu nhiên).
+        Không vẽ trong vùng thụt đầu dòng 80px ở hai đầu.
         """
         effective_gap = base_gap + self.arrow_offset
+        indent = 80  # Khoảng thụt đầu dòng
 
         if self.direction in ("right", "left"):
             center_y = self.y + self.height // 2 - offset[1]
             if self.direction == "right":
-                start_x = self.x + effective_gap // 2 - offset[0]
-                end_x = self.x + self.width - arrow_total_length - offset[0]
+                start_x = self.x + indent + effective_gap // 2 - offset[0]  # Bắt đầu từ indent
+                end_x = self.x + self.width - indent - arrow_total_length - offset[0]  # Kết thúc trước indent
                 pos = start_x
                 while pos < end_x:
                     self.draw_composite_arrow(display, (pos, center_y), self.direction,
-                                              arrow_total_length, arrow_thickness, arrow_color)
+                                            arrow_total_length, arrow_thickness, arrow_color)
                     pos += effective_gap
             else:  # left
-                start_x = self.x + self.width - effective_gap // 2 - offset[0]
-                end_x = self.x + arrow_total_length - offset[0]
+                start_x = self.x + self.width - indent - effective_gap // 2 - offset[0]
+                end_x = self.x + indent + arrow_total_length - offset[0]
                 pos = start_x
                 while pos > end_x:
                     self.draw_composite_arrow(display, (pos, center_y), self.direction,
-                                              arrow_total_length, arrow_thickness, arrow_color)
+                                            arrow_total_length, arrow_thickness, arrow_color)
                     pos -= effective_gap
         else:
             center_x = self.x + self.width // 2 - offset[0]
             if self.direction == "down":
-                start_y = self.y + effective_gap // 2 - offset[1]
-                end_y = self.y + self.height - arrow_total_length - offset[1]
+                start_y = self.y + indent + effective_gap // 2 - offset[1]
+                end_y = self.y + self.height - indent - arrow_total_length - offset[1]
                 pos = start_y
                 while pos < end_y:
                     self.draw_composite_arrow(display, (center_x, pos), self.direction,
-                                              arrow_total_length, arrow_thickness, arrow_color)
+                                            arrow_total_length, arrow_thickness, arrow_color)
                     pos += effective_gap
             else:  # up
-                start_y = self.y + self.height - effective_gap // 2 - offset[1]
-                end_y = self.y + arrow_total_length - offset[1]
+                start_y = self.y + self.height - indent - effective_gap // 2 - offset[1]
+                end_y = self.y + indent + arrow_total_length - offset[1]
                 pos = start_y
                 while pos > end_y:
                     self.draw_composite_arrow(display, (center_x, pos), self.direction,
-                                              arrow_total_length, arrow_thickness, arrow_color)
+                                            arrow_total_length, arrow_thickness, arrow_color)
                     pos -= effective_gap
 
     def draw_composite_arrow(self, display: pygame.Surface, start_pos: tuple[float, float],

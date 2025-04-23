@@ -1,16 +1,19 @@
+from typing import Optional
 import pygame
 from constant import *
 
-
 class TrafficLight:
-    def __init__(self, pos: list[int], cycle: int, direction: str, roadWidth: int):
+    def __init__(self, pos: list[int], cycle: int, direction: str, roadWidth: int, currentLight: str, greenDuration: int, remain: float):
         self.pos = pos
         self.cycle = cycle
-        self.currentLight = RED
-        self.remain = 8
+        self.currentLight = currentLight
+        self.remain: float = remain
+        self.greenDuration = greenDuration
+        self.yellowDuration = YELLOW_DURATION
+        self.redDuration = self.cycle - self.greenDuration - self.yellowDuration
         self.direction = direction
-        self.lightRadius = 18
-        self.stopLine = None
+        self.lightRadius: int = 18
+        self.stopLine: Optional[pygame.Rect] = None
         self.stopLinePos = [self.pos[0], self.pos[1]]
         self.lightPos = [self.pos[0], self.pos[1]]
         self.timerPos = [0, 0]
@@ -45,12 +48,22 @@ class TrafficLight:
         
         self.stopLine = pygame.Rect(self.stopLinePos, ((STOPLINE_HEIGHT, roadWidth) if  direction in (LEFT, RIGHT) else (roadWidth, STOPLINE_HEIGHT)))
     def update(self, delta_t: float):
-        pass
-    
+        self.remain -= delta_t
+        if self.remain <= 0:
+            if self.currentLight == RED:
+                self.currentLight = GREEN
+                self.remain = self.greenDuration
+            elif self.currentLight == GREEN:
+                self.currentLight = YELLOW
+                self.remain = self.yellowDuration
+            elif self.currentLight == YELLOW:
+                self.currentLight = RED
+                self.remain = self.redDuration
     def render(self, display: pygame.Surface, offset: tuple[int, int]):
         font = pygame.font.SysFont("sans", 35)
         color = TEXT2COLOR[self.currentLight]
-        textRemainder = str(self.remain) if self.remain > 9 else '0' + str(self.remain)
+        remainInt = math.ceil(self.remain)
+        textRemainder = str(remainInt) if remainInt > 9 else '0' + str(remainInt)
         timeRender = font.render(textRemainder, True, color)
         
         pygame.draw.circle(display, color, (self.lightPos[0] - offset[0], self.lightPos[1] - offset[1]), self.lightRadius)
